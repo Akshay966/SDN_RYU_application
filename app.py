@@ -21,11 +21,10 @@ import math
 import statistics 
 from datetime import datetime
 
-from ml import MachineLearningAlgo
 
 #-------------------------------------------------------#
-APP_TYPE = 1
-#0 datacollection, 1 flow classification
+APP_TYPE = 0
+#0 datacollection
 
 #TEST_TYPE is applicable only for datacollection
 #0  ping, 1 telnet, 2-VoIP 3-DNS
@@ -100,10 +99,7 @@ class TrafficClassifierML(app_manager.RyuApp):
         self.mlobj = None
         self.arp_ip_to_port = {}
         self.flowdb = {}
-        if APP_TYPE == 1:
-            self.mlobj = MachineLearningAlgo()
-            self.logger.info("Application Started with ML Classification Mode")
-        else:
+        if APP_TYPE == 0:
             self.logger.info("Application Started with Data Collection Mode")
             init_csv()
 
@@ -264,43 +260,6 @@ class TrafficClassifierML(app_manager.RyuApp):
                 if APP_TYPE==0:
                     #writecsv
                     write_csv(self.flowdb[key], revdata)
-
-                else:
-                    #ML detection mechanism
-                    self.run_classifier(self.flowdb[key], revdata)
-
-
-
-    def run_classifier(self,fwddata, revdata):
-        row = [ fwddata["byte_count"],
-                fwddata["packet_count"],
-                fwddata["bytes_rate"],
-                fwddata["packet_rate"],
-                fwddata["avg_packet_rate"],
-                fwddata["avg_bytes_rate"],
-                revdata["byte_count"],
-                revdata["packet_count"],
-                revdata["bytes_rate"],
-                revdata["packet_rate"],
-                revdata["avg_packet_rate"],
-                revdata["avg_bytes_rate"]
-                ]
-        result = self.mlobj.classify(row)
-        print("-"*50)
-        print("flow details- srcip", fwddata["src_ip"], "dstip", fwddata["dst_ip"], "protocol", fwddata["protocol"])
-        print("classification result", result)
-
-        if result == '0':
-            print("PING TRAFFIC")
-        elif result=='1':
-            print("TELNET TRAFFIC")
-        elif result=='2':
-            print("VOIP TRAFFIC")
-        elif result=='3':
-            print("DNS TRAFFIC")
-        else:
-            print("UNKNOWN TRAFFIC ", result)
-        print("-"*50)
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None, idletime=0, hardtime=0):
         ofproto = datapath.ofproto
